@@ -47,6 +47,19 @@ class Ly_Tokenize(object):
             comment += self.char
             self.get_char()
         return comment
+ 
+    def get_string(self):
+        string = self.char
+        self.get_char()
+        while not self.char == string[0]:
+            if self.char == "-1":
+                string += string[0]
+                break
+            string += self.char
+            self.get_char()
+        string += self.char
+        self.get_char()
+        return string
 
     def get_tok(self):
         while self.char.isspace():
@@ -60,6 +73,9 @@ class Ly_Tokenize(object):
 
         elif self.char == "#":
             return tokens.Ly_Comment(self.get_comment())
+       
+        elif self.char == "'" or self.char == '"':
+            return tokens.Ly_String(self.get_string())
 
         elif self.char == "-1":
             return tokens.Ly_EOF()

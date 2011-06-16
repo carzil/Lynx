@@ -8,9 +8,6 @@ class Ly_Number(object):
     def __eq__(self, obj):
         return isinstance(obj, Ly_Number) and self.value == obj.value
     
-    def __ne__(self, obj):
-        return isinstance(obj, Ly_Number) and self.value != obj.value
-
     def __repr__(self):
         return "<Ly_Number(" + str(self.value)  + ")>"
 
@@ -20,9 +17,6 @@ class Ly_Identifier(object):
 
     def __eq__(self, obj):
         return isinstance(obj, Ly_Identifier) and self.id == obj.id
-
-    def __ne__(self, obj):
-        return isinstance(obj, Ly_Identifier) and self.id != obj.id
 
     def __repr__(self):
         return "<Ly_Identifier('" + self.id  + "')>"
@@ -34,9 +28,6 @@ class Ly_SpecChar(object):
     def __eq__(self, obj):
         return isinstance(obj, Ly_SpecChar) and self.char == obj.char
 
-    def __ne__(self, obj):
-        return isinstance(obj, Ly_SpecChar) and self.char != obj.char
-    
     def __repr__(self):
         return "<Ly_SpecChar('" + self.char  + "')>"
 
@@ -47,16 +38,20 @@ class Ly_Comment(object):
     def __eq__(self, obj):
         return isinstance(obj, Ly_Comment) and self.comment == obj.comment
 
-    def __ne__(self, obj):
-        return isinstance(obj, Ly_Comment) and self.comment != obj.commet
+    def __repr__(self):
+        return "<Ly_Comment('" + self.comment  + "')>"
+
+class Ly_String(object):
+    def __init__(self, string):
+        self.string = string
+
+    def __eq__(self, obj):
+        return isinstance(obj, Ly_String) and self.string == obj.string
 
     def __repr__(self):
-        return "<Ly_SpecComment('" + self.comment  + "')>"
+        return "<Ly_String(" + self.string  + ")>"
 
 class Ly_EOF(object):
-    def __ne__(self, obj):
-        return isinstance(obj, Ly_EOF)
-
     def __eq__(self, obj):
         return isinstance(obj, Ly_EOF)
 
