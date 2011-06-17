@@ -3,7 +3,9 @@
 import tokens
 
 class Ly_Tokenize(object):
-    def __init__(self, string):
+    def __init__(self, string, file):
+        self.line = 1
+        self.file = file
         self.str = string
         self.pos = -1
         self.str_size = len(string) - 1
@@ -31,11 +33,11 @@ class Ly_Tokenize(object):
             num += self.char
             self.get_char()
         return num
-
+  
     def get_sc(self):
         sc = self.char
         self.get_char()
-        while self.char in ["+", "-", "*", "/", "|", "&", "%", "!", "*", ";", ",", "."]:
+        while self.char in ["+", "-", "*", "/", "|", "&", "*", ">", "<", "="]:
             sc += self.char
             self.get_char()
         return sc
@@ -63,22 +65,24 @@ class Ly_Tokenize(object):
 
     def get_tok(self):
         while self.char.isspace():
+            if self.char == "\n" or self.char == "\r":
+                self.line += 1
             self.get_char()
         
         if self.char.isalpha():
-            return tokens.Ly_Identifier(self.get_id())
+            return tokens.Ly_IdentifierToken(self.get_id(), self.line, self.file, 1)
 
         elif self.char.isdigit():
-            return tokens.Ly_Number(int(self.get_num()))
+            return tokens.Ly_NumberToken(int(self.get_num()), self.line, self.file, 2)
 
         elif self.char == "#":
-            return tokens.Ly_Comment(self.get_comment())
+            return tokens.Ly_CommentToken(self.get_comment(), self.line, self.file, 3)
        
         elif self.char == "'" or self.char == '"':
-            return tokens.Ly_String(self.get_string())
+            return tokens.Ly_StringToken(self.get_string(), self.line, self.file)
 
         elif self.char == "-1":
-            return tokens.Ly_EOF()
+            return tokens.Ly_EOFToken(self.file)
         
         else:
-            return tokens.Ly_SpecChar(self.get_sc())
+            return tokens.Ly_SpecCharToken(self.get_sc(), self.line, self.file, 5)
