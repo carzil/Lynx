@@ -7,11 +7,11 @@ print sys.path
 import errors.lexer
 
 class Ly_NumberToken(object):
-    def __init__(self, value, line, file, exit_code):
+    def __init__(self, value, line, t_file, exit_code):
         self.value = value
         self.line = line
-        self.file = file
-        self.c_error = errors.lexer.Ly_InvalidNumberError(file, line)
+        self.file = t_file
+        self.c_error = errors.lexer.Ly_InvalidNumberError(t_file, line)
         if not self._valid():
             exit(exit_code)
 
@@ -35,11 +35,11 @@ class Ly_NumberToken(object):
         return "<Ly_NumberToken(" + str(self.value)  + ")\nFile '" + self.file  + "', line " + str(self.line)  +  ">\n"
 
 class Ly_IdentifierToken(object):
-    def __init__(self, id, line, file, exit_code):
-        self.id = id
+    def __init__(self, t_id, line, t_file, exit_code):
+        self.id = t_id
         self.line = line
-        self.file = file
-        self.c_error = errors.lexer.Ly_InvalidIdentifierError(file, line)
+        self.file = t_file
+        self.c_error = errors.lexer.Ly_InvalidIdentifierError(t_file, line)
         if not self._valid():
             exit(exit_code)
  
@@ -56,11 +56,11 @@ class Ly_IdentifierToken(object):
         return "<Ly_IdentifierToken('" + str(self.id)  + "')\nFile '" + self.file  + "', line " + str(self.line)  +  ">\n"
 
 class Ly_SpecCharToken(object):
-    def __init__(self, char, line, file, exit_code):
+    def __init__(self, char, line, t_file, exit_code):
         self.char = char
         self.line = line
-        self.file = file
-        self.c_error = errors.lexer.Ly_InvalidSpecCharError(file, line)
+        self.file = t_file
+        self.c_error = errors.lexer.Ly_InvalidSpecCharError(t_file, line)
         if not self._valid():
             exit(exit_code)
 
@@ -84,10 +84,10 @@ class Ly_SpecCharToken(object):
         return "<Ly_SpecCharToken('" + str(self.char)  + "')\nFile '" + self.file  + "', line " + str(self.line)  +  ">\n"
      
 class Ly_CommentToken(object):
-    def __init__(self, comment, line, file):
+    def __init__(self, comment, line, t_file):
         self.value = value
         self.line = line
-        self.file = file
+        self.file = t_file
 
     def __eq__(self, obj):
         return isinstance(obj, Ly_CommentToken) and self.comment == obj.comment
@@ -96,10 +96,10 @@ class Ly_CommentToken(object):
         return "<Ly_CommentToken('" + str(self.comment)  + "')\nFile '" + self.file  + "', line " + str(self.line)  +  ">\n"
 
 class Ly_StringToken(object):
-    def __init__(self, string, line, file):
+    def __init__(self, string, line, t_file):
         self.string = string
         self.line = line
-        self.file = file
+        self.file = t_file
 
     def __eq__(self, obj):
         return isinstance(obj, Ly_StringToken) and self.string == obj.string
@@ -108,8 +108,8 @@ class Ly_StringToken(object):
         return "<Ly_StringToken(" + str(self.string)  + ")\nFile '" + self.file  + "', line " + str(self.line)  +  ">\n"
 
 class Ly_EOFToken(object):
-    def __init__(self, file):
-        self.file = file
+    def __init__(self, t_file):
+        self.file = t_file
 
     def __eq__(self, obj):
         return isinstance(obj, Ly_EOFToken)

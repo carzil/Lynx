@@ -3,9 +3,9 @@
 import tokens
 
 class Ly_Tokenize(object):
-    def __init__(self, string, file):
+    def __init__(self, string, t_file):
         self.line = 1
-        self.file = file
+        self.file = t_file
         self.str = string
         self.pos = -1
         self.str_size = len(string) - 1
@@ -19,12 +19,12 @@ class Ly_Tokenize(object):
             self.char = "-1"
     
     def get_id(self):
-        id = self.char
+        t_id = self.char
         self.get_char()
         while self.char.isalpha() or self.char == "_":
-            id += self.char
+            t_id += self.char
             self.get_char()
-        return id
+        return t_id
 
     def get_num(self):
         num = self.char
