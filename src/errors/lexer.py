@@ -1,8 +1,8 @@
 #!/usr/bin/python
 #(c) Andreev Alexander (aka Carzil) 2011
 class Ly_Error(object):
-    def __init__(self, file, line):
-        self.file = file
+    def __init__(self, t_file, line):
+        self.file = t_file
         self.line = line
 
     def error(self):
