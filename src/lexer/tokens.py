@@ -3,7 +3,6 @@
 import os
 import sys
 sys.path.insert(0, os.path.realpath(".."))
-print sys.path
 import errors.lexer
 
 class Ly_NumberToken(object):
