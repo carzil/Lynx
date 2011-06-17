@@ -22,7 +22,6 @@ class c_main
 
 def int f_main()
 {
-    lynx.lang.set_main(&(block main))
     io.print("Hello, function!");
     return 0;
 }
