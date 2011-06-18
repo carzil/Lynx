@@ -2,7 +2,7 @@
 import lynx.iostream as io
 import lynx.lang
 
-namespace n_main
+namespace n_main =>
 {
     def int main()
     {
@@ -11,7 +11,7 @@ namespace n_main
     } 
 }
 
-class c_main
+class c_main(object)
 {
     def int main() -> public;
     {
