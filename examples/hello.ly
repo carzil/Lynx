@@ -1,7 +1,7 @@
 #(c) Andreev Alexander (aka Carzil) 2011
 import lynx.iostream as io
 
-def int main()
+def main() -> int;
 {
     string hello = "Hello, Lynx!";
     io.print(hello);

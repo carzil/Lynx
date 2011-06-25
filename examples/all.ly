@@ -1,10 +1,9 @@
 #(c) Andreev Alexander (aka Carzil) 2011
 import lynx.iostream as io
-import lynx.lang
 
 namespace n_main =>
 {
-    def int main()
+    def main() -> int;
     {
         io.print("Hello, namespace!")
         return 0;
@@ -13,23 +12,24 @@ namespace n_main =>
 
 class c_main(object)
 {
-    def int main() -> public;
+    def public main() -> int;
     {
         io.print("Hello, class!");
         return 0;
     }
 }
 
-def int f_main()
-{
-    io.print("Hello, function!");
-    return 0;
-}
-
 block int b_main =>
 {
     io.print("Hello, block");
-    return 0;
 }
 
-lynx.lang.set_main(&(b_main))
+
+def main() -> int;
+{
+    n_main::main();
+    c_main.main();
+    b_main();
+    io.print("Hello, function!");
+    return 0;
+}

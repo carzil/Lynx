@@ -3,7 +3,7 @@ import lynx.iostream as io
 
 class Hello(object)
 {
-    def int main() -> public;
+    def public main() -> int;
     {
         io.print("Hello, class 'Hello!'");
         return 0;

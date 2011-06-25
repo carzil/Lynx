@@ -1,16 +1,15 @@
 #(c) Andreev Alexander (aka Carzil)
-import lynx.iostrem as io
-from lynx.big import *
+from lynx import iostrem as io
 
 typedef hello => 
-struct hi
+struct
 {
-    BigInt one;
+    int one;
     string two;
     int three;
 }
 
-def int main()
+def main() -> int;
 {
     hello a;
     a.one = 12312319513946513974539761;
