@@ -1,14 +1,25 @@
 #!/usr/bin/python
 #(c) Andreev Alexander (aka Carzil) 2011
-from tokenizer import Ly_Tokenize
-from tokens import Ly_EOFToken
+from lexer.tokenizer import Ly_Tokenize
+from errors.system import Ly_IOError
+import os
 
-
-def get_tokens(string, t_file):
-    tokenize = Ly_Tokenize(string, t_file)
-    token = tokenize.get_tok()
-    tokens = []
-    while not token == Ly_EOFToken(t_file):
-        tokens.append(token)
-        token = tokenize.get_tok()
-    return tokens
+class Tokens(object):
+    def __init__(self, filename=None):
+        if os.path.exists(os.path.realpath(filename)):
+            f = open(filename)
+            self.toks = Ly_Tokenize(f)
+        else:
+            Ly_IOError("file " + os.path.realpath(filename) + " does not exists")
+            exit(1)
+            
+    def next(self):
+        self.tok = self.toks.get_tok()
+        return self.tok
+    
+    def current(self):
+        try:
+            return self.tok
+        except:
+            self.tok = self.toks.get_tok()
+            return self.tok
