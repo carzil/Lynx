@@ -3,33 +3,39 @@
 import sys
 
 class Ly_Error(object):
-    def __init__(self, t_file, line):
+    def __init__(self, t_file, line, pos, string):
         self.file = t_file
         self.line = line
+        self.pos = pos
+        self.string = string
 
     def error(self):
         pass
 
 class Ly_InvalidNumberError(Ly_Error):
-    def error(self, p_num, msg):
-        print >> sys.stderr, "InvalidNumber error raised by lexer!"
-        print >> sys.stderr, "File '" + self.file + "', line " + str(self.line)
-        print >> sys.stderr, "Invalid number: '" + p_num  + "'! ", msg
+    def error(self, msg):
+        print("SyntaxError:", msg, file=sys.stderr)
+        print("   ", "In file '" + self.file + "', on line " + str(self.line) + ":", file=sys.stderr)
+        print("       ", self.string, file=sys.stderr)
+        print("       ", " " * (self.pos[0] - 1), "^", file=sys.stderr)
 
 class Ly_InvalidIdentifierError(Ly_Error):
-    def error(self, p_id, msg):
-        print >> sys.stderr, "InvalidIndentifier error raised by lexer!"
-        print >> sys.stderr, "File '" + self.file + "', line " + str(self.line)
-        print >> sys.stderr, "Invalid identifier: '" + p_id  + "'!", msg
-
+    def error(self, msg):
+        print("SyntaxError:", msg, file=sys.stderr)
+        print("   ", "In file '" + self.file + "', on line " + str(self.line) + ":", file=sys.stderr)
+        print("       ", self.string, file=sys.stderr)
+        print("       ", " " * (self.pos[0] - 1), "^", file=sys.stderr)
+        
 class Ly_InvalidSpecCharError(Ly_Error):
-    def error(self, p_char, msg):
-        print >> sys.stderr, "InvalidString error raised by lexer!"
-        print >> sys.stderr, "File '" + self.file + "', line " + str(self.line)
-        print >> sys.stderr, "Invalid special character: '" + p_char  + "'!", msg
+    def error(self, msg):
+        print("SyntaxError:", msg, file=sys.stderr)
+        print("   ", "In file '" + self.file + "', on line " + str(self.line) + ":", file=sys.stderr)
+        print("       ", self.string, file=sys.stderr)
+        print("       ", " " * (self.pos[0] - 1), "^", file=sys.stderr)
 
 class Ly_InvalidStringError(Ly_Error):
-    def error(self, p_string, msg):
-        print >> sys.stderr, "InvalidString error raised by lexer!"
-        print >> sys.stderr, "File '" + self.file + "', line " + str(self.line)
-        print >> sys.stderr, "Invalid string: " + p_string  + "!", msg
+    def error(self):
+        print("SyntaxError: unexpected EOF!", file=sys.stderr)
+        print("   ", "In file '" + self.file + "', on line " + str(self.line) + ":", file=sys.stderr)
+        print("       ", self.string, file=sys.stderr)
+        print("     ", " " * (self.pos[1] - 1), "^", file=sys.stderr)
