@@ -5,35 +5,91 @@ class Ly_AST_Node(object):
     
 class Ly_AST_TypeNode(Ly_AST_Node):
     def __init__(self, value):
-        self.value = value    
+        self.value = value
+    
+    def __repr__(self):
+        return "type: '" + self.value + "'"    
     
 class Ly_AST_NumberNode(Ly_AST_Node):
     def __init__(self, value, type):
         self.value = value
         self.type = type
+    
+    def __repr__(self):
+        return "<Number " + self.value + ", " + str(self.type) + ">"
+    
+    def __eq__(self, obj):
+        return isinstance(obj, Ly_AST_NumberNode) and self.value == obj.value 
 
 class Ly_AST_StringNode(Ly_AST_Node):
-    def __init__(self, value, type):
+    def __init__(self, value):
         self.value = value
-        self.type = type
+        self.type = Ly_AST_TypeNode("string")
+    
+    def __repr__(self):
+        return "<String " + self.value + ", " + str(self.type) + ">"
+    
+    def __eq__(self, obj):
+        return isinstance(obj, Ly_AST_StringNode) and self.value == obj.value
     
 class Ly_AST_ArrNode(Ly_AST_Node):
     def __init__(self, values):
         self.values = values
+        
+    def __repr__(self):
+        return "<Array, values: " + str([i for i in self.values]) + ">"
+    
+    def __eq__(self, obj):
+        return isinstance(obj, Ly_AST_ArrNode) and self.values == obj.values
          
-class Ly_AST_AssocArrNode(Ly_AST_Node):
-    def __init__(self, values, keys):
+class Ly_AST_DictNode(Ly_AST_Node):
+    def __init__(self, keys, values):
         self.values = values
         self.keys = keys
         
+    def __repr__(self):
+        return "<Associative array, keys: " + str(self.keys) + ", values: " + str(self.values) + ">"
+    
+    def __eq__(self, obj):
+        return isinstance(obj, Ly_AST_DictNode) and self.keys == obj.keys and self.values == obj.values
+        
+class Ly_AST_TupleNode(Ly_AST_Node):
+    def __init__(self, values):
+        self.values = values
+    
+    def __repr__(self):
+        return "<Tuple  " + str(self.values) + ">"
+    
+    def __eq__(self, obj):
+        return isinstance(obj, Ly_AST_NumberNode) and self.values == obj.values
+    
+class Ly_AST_SetNode(Ly_AST_Node):
+    def __init__(self, vals):
+        self.values = vals
+        
+    def __repr__(self):
+        return "<Set " + str(self.values) + ">"
+        
+    def __eq__(self, obj):
+        return isinstance(obj, Ly_AST_NumberNode) and self.values == obj.values
 class Ly_AST_IdentifierNode(Ly_AST_Node):
     def __init__(self, id):
         self.id = id
     
-class Ly_AST_VariablePrototypeNode(Ly_AST_Node):
-    def __init__(self, id, type):
+    def __repr__(self):
+        return "<Identifier '" + self.id + "'>"
+    
+    def __eq__(self, obj):
+        return isinstance(obj, Ly_AST_NumberNode) and self.id == obj.id
+    
+class Ly_AST_ArgumentNode(Ly_AST_Node):
+    def __init__(self, id, type, spec="normal"):
         self.id = id
         self.type = type
+        self.spec = spec
+        
+    def __repr__(self):
+        return "<Argument '" + self.id + "'>"
 
 class Ly_AST_BinaryOperatorNode(Ly_AST_Node):
     def __init__(self, op, r_opd, l_opd, type, is_users=False):
@@ -117,9 +173,9 @@ class Ly_AST_ForNode(Ly_AST_Node):
         self.condition = condition
         self.step = step
 
-class Ly_AST_DeclarationNode(Ly_AST_Node):
-    def __init__(self, var, value, type):
-        self.var = var
+class Ly_AST_AssignNode(Ly_AST_Node):
+    def __init__(self, name, value, type):
+        self.name = name
         self.value = value
         self.type = type
         
