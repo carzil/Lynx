@@ -1,7 +1,6 @@
 #!/usr/bin/python
 #(c) Andreev Alexander (aka Carzil) 2011
 import lexer.tokens as tokens
-import logging
     
 class Ly_Tokenize(object):
     def __init__(self, fobj):
@@ -71,6 +70,7 @@ class Ly_Tokenize(object):
         while self.char.isspace():
             if self.char == "\n" or self.char == "\r":
                 self.line += 1
+                self.char_n = -1
             self.get_char()
         
         if self.char.isalpha() or self.char == "_":
@@ -90,7 +90,12 @@ class Ly_Tokenize(object):
             return tokens.Ly_StringToken(self.get_string(), self.line, self.file, (cached, self.char_n), self.lines[self.line - 1], 1231233)
 
         elif self.char == "-1":
-            return tokens.Ly_EOFToken(self.file, self.line, (self.char_n, self.char_n), self.lines[self.line - 1])
+            if len(self.lines) > 1:
+                return tokens.Ly_EOFToken(self.file, self.line, (self.char_n, self.char_n), self.lines[self.line - 2])
+            elif len(self.lines) == 1:
+                return tokens.Ly_EOFToken(self.file, self.line, (self.char_n, self.char_n), self.lines[0])
+            else:
+                return tokens.Ly_EOFToken(self.file, self.line, (self.char_n, self.char_n), "")
         
         elif self.char == "(" or self.char == ")" or self.char == "[" or self.char == "]" or self.char == "{" or self.char == "}":
             cached = self.char_n

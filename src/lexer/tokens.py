@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #(c) Andreev Alexander (aka Carzil) 2011
-import errors.lexer
+from errors.lexer import Ly_SyntaxError
 import const
 
 class Ly_Token(object):
@@ -13,21 +13,20 @@ class Ly_NumberToken(Ly_Token):
         self.file = t_file
         self.pos = pos
         self.string = string
-        self.c_error = errors.lexer.Ly_InvalidNumberError(t_file, line, pos, string)
-        if not self._valid():
+        if self._valid() == -1:
             exit(exit_code)
 
     def _valid(self):
-        flag = True
-        for i in range(len(self.value)):
-            if self.value[i] == "." and flag:
-                flag = False
-            elif self.value[i] == "." and not flag:
-                self.c_error.error("repeating of '.' isn't possible!")
-                return False
-            elif self.value[i].lower() == "l" and i != len(self.value) - 1:
-                self.c_error.error("indicator of type long (l or L) must be in end of number")
-        return True
+        if self.value.count(".") > 2:
+            Ly_SyntaxError(self.file, self.line, self.pos, self.string)
+            return -1
+        if self.value.lower().count("l") >= 1 and self.value[-1].lower() != "l":
+            Ly_SyntaxError(self.file, self.line, self.pos, self.string)
+            return -1
+        if not self.value.isdigit():
+            Ly_SyntaxError(self.file, self.line, self.pos, self.string)
+            return -1
+        
 
     def __eq__(self, obj):
         return isinstance(obj, Ly_NumberToken) and self.value == obj.value
@@ -42,15 +41,13 @@ class Ly_IdentifierToken(Ly_Token):
         self.file = t_file
         self.pos = pos
         self.string = string
-        self.c_error = errors.lexer.Ly_InvalidIdentifierError(t_file, line, pos, string)
-        if not self._valid():
+        if self._valid() == -1:
             exit(exit_code)
  
     def _valid(self):
         if not (self.value[0].isalpha() or self.value[0] == "_"):
-            self.c_error.error("first symbol of identifier must be a letter or '_'!")
-            return False
-        return True
+            Ly_SyntaxError(self.file, self.line, self.pos, self.string)
+            return -1
 
     def __eq__(self, obj):
         return isinstance(obj, Ly_IdentifierToken) and self.value == obj.value
@@ -65,18 +62,12 @@ class Ly_SpecCharToken(Ly_Token):
         self.file = t_file
         self.pos = pos
         self.string = string
-        self.c_error = errors.lexer.Ly_InvalidSpecCharError(t_file, line, pos, string)
-        if not self._valid():
+        if self._valid() == -1:
             exit(exit_code)
 
     def _valid(self):
-        if self.value in const.OPERATORS:
-            return True
-        elif self.value in ["{", "}", "(", ")", "[", "]"]:
-            return True
-        else:
-            self.c_error.error("unknown character '" + self.value + "'!")
-            return False
+        if self.value not in const.OPERATORS and self.value not in ["{", "}", "(", ")", "[", "]"]:
+            Ly_SyntaxError(self.file, self.line, self.pos, self.string)
 
     def __eq__(self, obj):
         return isinstance(obj, Ly_SpecCharToken) and self.value == obj.value
@@ -105,14 +96,13 @@ class Ly_StringToken(Ly_Token):
         self.file = t_file
         self.pos = pos
         self.string = string
-        self.c_error = errors.lexer.Ly_InvalidStringError(t_file, line, pos, string)
         if not self._valid():
             exit(exit_code)
         
 
     def _valid(self):
         if self.value[0] != self.value[-1]:
-            self.c_error.error()
+            Ly_SyntaxError(self.file, self.line, self.pos, self.string)
             return False
         return True
 
@@ -126,7 +116,7 @@ class Ly_EOFToken(Ly_Token):
     def __init__(self, t_file, line, pos, string):
         self.file = t_file
         self.line = line
-        self.pos = pos
+        self.pos = (pos[0], pos[1] + 2)
         self.string = string
         self.value = None
 

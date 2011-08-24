@@ -6,5 +6,4 @@ def Ly_SystemError(msg):
     print(M)
     
 def Ly_IOError(msg):
-    print("FileSystemError:", msg)
-    print(M)
+    print("IOError:", msg)

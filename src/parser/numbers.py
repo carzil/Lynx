@@ -3,19 +3,8 @@
 import ly_ast as ast
 import errors.parser
 import types
-import logging
-from const import DEBUG
-
-log = logging.getLogger("lynx.parser.numbers")
-f = logging.Formatter("[%(name)s] %(asctime)s: %(message)s (%(levelname)s)")
-sh = logging.StreamHandler()
-sh.setFormatter(f)
-log.addHandler(sh)
-if DEBUG:
-    log.setLevel(logging.DEBUG)
 
 def parse_num_type(value):
-    log.debug("lynx.parser.numbers.parse_num_type")
     try:
         if value[1] == "b":
             return ast.Ly_AST_TypeNode("bin")
@@ -35,7 +24,6 @@ def parse_num_type(value):
     return ast.Ly_AST_TypeNode("int")
     
 def parse_number(tokens):
-    log.debug("lynx.parser.number.parse_number")
     value = tokens.current().value
     token = tokens.next()
     if token.value != "->":
