@@ -1,7 +1,10 @@
 #!/usr/bin/python
 #(c) Andreev Alexander (aka Carzil) 2011
 class Ly_AST_Node(object):
-    pass
+    pass         
+
+class Ly_AST_Constant(object):
+    constant = True
 
 class Ly_AST_ModuleNode(Ly_AST_Node):
     def __init__(self, code):
@@ -32,7 +35,7 @@ class Ly_AST_CodeNode(Ly_AST_Node):
     def __repr__(self):
         s = ""
         for i in self.code:
-            s += str(i) + ";\n"            
+            s += "    " + str(i) + ";\n"            
         return str(s[:-1])    
 
     
@@ -41,9 +44,9 @@ class Ly_AST_TypeNode(Ly_AST_Node):
         self.value = value
     
     def __repr__(self):
-        return str(self.value)    
+        return " -> " + str(self.value)  
     
-class Ly_AST_NumberNode(Ly_AST_Node):
+class Ly_AST_NumberNode(Ly_AST_Node, Ly_AST_Constant):
     def __init__(self, value, type):
         self.value = value
         self.type = type
@@ -57,7 +60,7 @@ class Ly_AST_NumberNode(Ly_AST_Node):
     def __eq__(self, obj):
         return isinstance(obj, Ly_AST_NumberNode) and self.value == obj.value 
 
-class Ly_AST_StringNode(Ly_AST_Node):
+class Ly_AST_StringNode(Ly_AST_Node, Ly_AST_Constant):
     def __init__(self, value):
         self.value = value
         self.type = Ly_AST_TypeNode("string")
@@ -68,7 +71,17 @@ class Ly_AST_StringNode(Ly_AST_Node):
     def __eq__(self, obj):
         return isinstance(obj, Ly_AST_StringNode) and self.value == obj.value
     
-class Ly_AST_ArrNode(Ly_AST_Node):
+class Ly_AST_ListNode(Ly_AST_Node, Ly_AST_Constant):
+    def __init__(self, values):
+        self.values = values
+        
+    def __repr__(self):
+        return str(self.values)
+    
+    def __eq__(self, obj):
+        return isinstance(obj, Ly_AST_ListNode) and self.values == obj.values
+         
+class Ly_AST_TupleNode(Ly_AST_Node, Ly_AST_Constant):
     def __init__(self, values):
         self.values = values
         
@@ -133,29 +146,25 @@ class Ly_AST_ArgumentNode(Ly_AST_Node):
     def __repr__(self):
         return str(self.id) + " -> " + str(self.type)
     
-class Ly_AST_ArgumentDefaultNode(Ly_AST_Node):
-    def __init__(self, id, type, value):
+class Ly_AST_MultipleArgsNode(Ly_AST_Node):
+    def __init__(self, id):
         self.id = id
-        self.type = type
         
     def __repr__(self):
-        return str(self.id) + " -> " + str(self.type)
+        return str(self.id) + " -> args" 
 
-class Ly_AST_KeywordArgumentsNode(Ly_AST_Node):
-    def __init__(self, id, type):
-        self.id = id
-        self.type = type
+class Ly_AST_ArgumentsNode(Ly_AST_Node):
+    def __init__(self, args):
+        self.args = args
         
     def __repr__(self):
-        return str(self.id) + " -> " + str(self.type)
-    
-class Ly_AST_MultipleArgumentsNode(Ly_AST_Node):
-    def __init__(self, id, type):
-        self.id = id
-        self.type = type
-        
-    def __repr__(self):
-        return str(self.id) + " -> " + str(self.type)
+        s = "("
+        for i in self.args:
+            s += str(i) + ", "
+        if len(s) == 1:
+            s = "()"
+        else:
+            s = s[:-2] + ")"
 
 class Ly_AST_IndexingNode(Ly_AST_Node):
     def __init__(self, name, index):
@@ -189,17 +198,18 @@ class Ly_AST_CallNode(Ly_AST_Node):
             s = s + ")"
         return s
 
-class Ly_AST_PrototypeNode(Ly_AST_Node):
-    def __init__(self, name, args, ret_type, pub):
-        self.name = name
-        self.args = args
-        self.ret_type = ret_type
-        self.pub = pub
-
 class Ly_AST_FunctionNode(Ly_AST_Node):
-    def __init__(self, name, body, proto):
-        self.proto = proto
+    def __init__(self, name, args, rtype, body):
+        self.name = name
+        if args:
+            self.args = args
+        else:
+            self.args = ""
         self.body = body
+        self.rtype = rtype
+    
+    def __repr__(self):
+        return "def " + str(self.name) + "(" + str(self.args) + ")" + " -> " + str(self.rtype) + "\n{\n" + str(self.body) + "\n}"
 
 class Ly_AST_ClassNode(Ly_AST_Node):
     def __init__(self, name, parents, pub_funcs, priv_funcs, pub_props, priv_props):
@@ -248,44 +258,83 @@ class Ly_AST_WhileNode(Ly_AST_Node):
         self.body = body
         
     def __repr__(self):
-        return "while (" + str(self.condition) + ")\n{\n" + str(self.body) + "\n}"
+        return "while (" + str(self.condition) + ") => {\n" + str(self.body) + "\n}"
 
 class Ly_AST_ForNode(Ly_AST_Node):
-    def __init__(self, loop_var, value, condition, step, body):
+    def __init__(self, loop_var, condition, step, body):
         self.loop_var = loop_var
-        self.value = value
         self.condition = condition
         self.step = step
         self.body = body
         
     def __repr__(self):
-        return "for (" + str(self.loop_var) + " = " + str(self.value) + "; " + str(self.condition) + "; " +\
+        return "for (" + str(self.loop_var) + "; " + str(self.condition) + "; " +\
                str(self.step) + ")\n{\n" + str(self.body) + "\n}"
 
 class Ly_AST_AssignNode(Ly_AST_Node):
+    def __init__(self, name, value, ttype):
+        self.name = name
+        self.value = value
+        self.type = ttype
+        
+    def __repr__(self):
+        return str(self.name) + str(self.type) + " = " + str(self.value)
+        
+class Ly_AST_AddAssignNode(Ly_AST_Node):
     def __init__(self, name, value):
         self.name = name
         self.value = value
         
     def __repr__(self):
-        return str(self.name) + " = " + str(self.value)
-        
-class Ly_AST_MultipleAssignNode(Ly_AST_Node):
-    def __init__(self, names, value):
-        self.names = names
+        return str(self.name) + " += " + str(self.value)
+
+class Ly_AST_SubAssignNode(Ly_AST_Node):
+    def __init__(self, name, value):
+        self.name = name
         self.value = value
         
     def __repr__(self):
-        a = ""
-        for i in range(len(self.names)):
-            a += str(self.names[i]) + " = "
-        a += str(self.value)
-        return a
+        return str(self.name) + " -= " + str(self.value)
+
+class Ly_AST_DivAssignNode(Ly_AST_Node):
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
         
-class Ly_AST_Namespace(Ly_AST_Node):
+    def __repr__(self):
+        return str(self.name) + " /= " + str(self.value)
+    
+class Ly_AST_Div2AssignNode(Ly_AST_Node):
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+        
+    def __repr__(self):
+        return str(self.name) + " //= " + str(self.value)
+
+class Ly_AST_MulAssignNode(Ly_AST_Node):
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+        
+    def __repr__(self):
+        return str(self.name) + " *= " + str(self.value)
+
+class Ly_AST_PowAssignNode(Ly_AST_Node):
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+        
+    def __repr__(self):
+        return str(self.name) + " **= " + str(self.value)
+        
+class Ly_AST_NamespaceNode(Ly_AST_Node):
     def __init__(self, name, body):
         self.name = name
         self.body = body
+    
+    def __repr__(self): 
+        return "namespace %s {\n\t%s\n}" % (str(self.name), "\n\t".join(str(self.body).split("\n")))
         
 class Ly_AST_CodeBlock(Ly_AST_Node):
     def __init__(self, code):
@@ -302,6 +351,8 @@ class Ly_AST_ReturnNode(Ly_AST_Node):
         self.value = value
         self.type = r_dec.value
         
+    def __repr__(self):
+        return "return (" + str(self.value) + " -> " + str(self.type) + ")" 
 class Ly_AST_IncNode(Ly_AST_Node):
     def __init__(self, name):
         self.name = name
@@ -328,8 +379,30 @@ class Ly_AST_NotNode(Ly_AST_Node):
         self.obj = obj
         
     def __repr__(self):
-        return "!" + str(self.obj)
+        return "not" + str(self.obj)
 
+class Ly_AST_BinNotNode(Ly_AST_Node):
+    def __init__(self, obj):
+        self.obj = obj
+        
+    def __repr__(self):
+        return "!" + str(self.obj)
+    
+class Ly_AST_AndNode(Ly_AST_Node):
+    def __init__(self, r, l):
+        self.right = r
+        self.left = l
+        
+    def __repr__(self):
+        return "(" + str(self.right) + ") and (" + str(self.left) + ")"
+
+class Ly_AST_OrNode(Ly_AST_Node):
+    def __init__(self, r, l):
+        self.right = r
+        self.left = l
+        
+    def __repr__(self):
+        return "(" + str(self.right) + ") or (" + str(self.left) + ")"
 
 class Ly_AST_AddNode(Ly_AST_Node):
     def __init__(self, r, l):
@@ -343,7 +416,7 @@ class Ly_AST_AddNode(Ly_AST_Node):
 
     def __repr__(self):
         return "(" + str(self.right) + ") + (" + str(self.left) + ")"
-    
+        
 class Ly_AST_SubNode(Ly_AST_Node):
     def __init__(self, r, l):
         self.right = r
@@ -383,6 +456,19 @@ class Ly_AST_DivNode(Ly_AST_Node):
     def __repr__(self):
         return "(" + str(self.right) + ") // (" + str(self.left) + ")"
     
+class Ly_AST_Div2Node(Ly_AST_Node):
+    def __init__(self, r, l):
+        self.right = r
+        self.left = l
+
+    def run(self):
+        l = self.left.run()
+        r = self.right.run()
+        return r // l
+
+    def __repr__(self):
+        return "(" + str(self.right) + ") / (" + str(self.left) + ")"
+
 class Ly_AST_ModNode(Ly_AST_Node):
     def __init__(self, r, l):
         self.right = r
@@ -486,3 +572,43 @@ class Ly_AST_GENode(Ly_AST_Node):
 
     def __repr__(self):
         return "(" + str(self.right) + ") >= (" + str(self.left) + ")"
+
+class Ly_AST_BinAndNode(Ly_AST_Node):
+    def __init__(self, r, l):
+        self.right = r
+        self.left = l
+        
+    def __repr__(self):
+        return "(" + str(self.right) + ") & (" + str(self.left) + ")"
+
+class Ly_AST_BinOrNode(Ly_AST_Node):
+    def __init__(self, r, l):
+        self.right = r
+        self.left = l
+        
+    def __repr__(self):
+        return "(" + str(self.right) + ") | (" + str(self.left) + ")"
+    
+class Ly_AST_BinXorNode(Ly_AST_Node):
+    def __init__(self, r, l):
+        self.right = r
+        self.left = l
+        
+    def __repr__(self):
+        return "(" + str(self.right) + ") ^ (" + str(self.left) + ")"
+
+class Ly_AST_BinShlNode(Ly_AST_Node):
+    def __init__(self, r, l):
+        self.right = r
+        self.left = l
+        
+    def __repr__(self):
+        return "(" + str(self.right) + ") shl (" + str(self.left) + ")"
+
+class Ly_AST_BinShrNode(Ly_AST_Node):
+    def __init__(self, r, l):
+        self.right = r
+        self.left = l
+        
+    def __repr__(self):
+        return "(" + str(self.right) + ") shr (" + str(self.left) + ")"
