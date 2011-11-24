@@ -3,10 +3,13 @@
 import ply.yacc as yacc
 import ast
 from lylexer.lexer import LyLexer
+from lyerrors.parser import Ly_SyntaxError
 
 class LyParser(object):
     def __init__(self, filename):
+        self.filename = filename
         self.tokenizer = LyLexer(filename)
+        self.fopen = open(filename)
         self.tokenizer.build()
         self.tokens = self.tokenizer.tokens
         self.parser = yacc.yacc(module=self)
@@ -40,11 +43,56 @@ class LyParser(object):
         
 #Statements
     def p_stmt(self, p):
-        """stmt : call_stmt
+        """stmt : def_stmt
+                | if_stmt
+                | call_stmt
                 | while_stmt
                 | for_stmt
                 | assign"""
         p[0] = p[1]
+        
+    def p_if_stmt(self, p):
+        """
+        if_stmt : IF expr THEN code_block elseifs_stmts else_stmt
+                | IF LPAR expr RPAR code_block elseifs_stmts else_stmt
+        """
+        if len(p) == 7:
+            p[0] = ast.Ly_AST_IfNode(p[2], p[4], p[6], p[5])
+        else:
+            p[0] = ast.Ly_AST_IfNode(p[3], p[5], p[7], p[6])
+            
+    def p_elseifs_stmts(self, p):
+        """
+        elseifs_stmts : elseifs_stmts elseif_stmt
+                      | elseif_stmt
+                      | 
+        """
+        if len(p) == 3:
+            p[0] = p[1] + [p[2]]
+        elif len(p) == 2:
+            p[0] = [p[1]]
+        else:
+            p[0] = []
+            
+    def p_elseif_stmt(self, p):
+        """
+        elseif_stmt : ELSEIF expr THEN code_block
+                    | ELSEIF LPAR expr RPAR code_block
+        """
+        if len(p) == 5:
+            p[0] = ast.Ly_AST_ElseIfNode(p[2], p[4], p[5], p[6])
+        else:
+            p[0] = ast.Ly_AST_ElseIfNode(p[3], p[5], p[6], p[7])
+            
+    def p_else_stmt(self, p):
+        """
+        else_stmt : ELSE THEN code_block
+                  | ELSE code_block
+        """
+        if len(p) == 4:
+            p[0] = ast.Ly_AST_ElseNode(p[3])
+        else:
+            p[0] = ast.Ly_AST_ElseNode(p[2]) 
         
     def p_stmt_while(self, p):
         """
@@ -64,7 +112,32 @@ class LyParser(object):
         if len(p) == 10: 
             p[0] = ast.Ly_AST_ForNode(p[3], p[5], p[7], p[9])
         else:
-            p[0] = ast.Ly_AST_ForNode(p[3], p[5], p[7], p[10]) 
+            p[0] = ast.Ly_AST_ForNode(p[3], p[5], p[7], p[10])
+            
+    def p_stmt_fdef(self, p):
+        """
+        def_stmt : DEF ID LPAR var_prototypes_list RPAR TYPEIS type THEN code_block
+                     | DEF ID LPAR var_prototypes_list RPAR TYPEIS type code_block
+        """
+        if len(p) == 10:
+            p[0] = ast.Ly_AST_FunctionNode(p[2], p[4], p[7], p[9])
+        else:
+            p[0] = ast.Ly_AST_FunctionNode(p[2], p[4], p[7], p[8])
+            
+    def p_vpl(self, p):
+        """var_prototypes_list : var_prototypes_list COMMA var_prototype
+                               | var_prototype
+        """
+        if len(p) == 4:
+            p[0] = p[1] + [p[3]]
+        else:
+            p[0] = [p[1]]
+            
+    def p_var_proto(self, p):
+        """
+        var_prototype : ID TYPEIS type
+        """
+        p[0] = ast.Ly_AST_VarProtoNode(p[1], p[3])
         
     def p_call_stmt(self, p):
         """call_stmt : ID LPAR RPAR
@@ -78,12 +151,13 @@ class LyParser(object):
     def p_assign_stmt(self, p):
         """
         assign : ID TYPEIS type EQUAL expr
-               | ID PE expr
-               | ID ME expr
-               | ID SE expr
-               | ID DSE expr
-               | ID AE expr
-               | ID DAE expr
+               | assign_left EQUAL expr
+               | assign_left PE expr
+               | assign_left ME expr
+               | assign_left SE expr
+               | assign_left DSE expr
+               | assign_left AE expr
+               | assign_left DAE expr
         """
         if len(p) == 6:
             p[0] = ast.Ly_AST_AssignNode(p[1], p[5], p[3])
@@ -100,10 +174,18 @@ class LyParser(object):
                 p[0] = ast.Ly_AST_Div2AssignNode(p[1], p[3])
             elif p[2] == "**=":
                 p[0] = ast.Ly_AST_PowAssignNode(p[1], p[3])
+            else:
+                p[0] = ast.Ly_AST_Assign2Node(p[1], p[3])
+                
+    def p_assign_left(self, p):
+        """assign_left : ID
+                       | index_expr
+        """
+        p[0] = p[1]
         
     def p_args_list(self, p):
-        """args_list : atom
-                     | args_list COMMA atom
+        """args_list : expr
+                     | args_list COMMA expr
         """
         if len(p) == 2:
             p[0] = [p[1]]
@@ -112,13 +194,18 @@ class LyParser(object):
 
 #Expressions        
     def p_expr(self, p):
-        """expr : primary
-                | arith
-                | par_expr
+        """expr : par_expr
                 | test
-                | cmp
+                | return_expr
+                | index_expr
         """
         p[0] = p[1]
+        
+    def p_index_expr(self, p):
+        """
+        index_expr : ID LSQB expr RSQB
+        """
+        p[0] = ast.Ly_AST_IndexingNode(p[1], p[3])
         
     def p_test(self, p):
         """test : test AND cmp
@@ -132,6 +219,37 @@ class LyParser(object):
                 p[0] = ast.Ly_AST_OrNode(p[1], p[3])
         else:
             p[0] = p[1]
+            
+    def p_cmp(self, p):
+        """cmp : cmp LT cmp_expr
+               | cmp GT cmp_expr
+               | cmp LE cmp_expr
+               | cmp GE cmp_expr
+               | cmp NE cmp_expr
+               | cmp DEQUAL cmp_expr
+               | cmp_expr
+        """
+        if len(p) == 4:
+            if p[2] == "<":
+                p[0] = ast.Ly_AST_LTNode(p[1], p[3])
+            elif p[2] == ">":
+                p[0] = ast.Ly_AST_GTNode(p[1], p[3])
+            elif p[2] == "<=":
+                p[0] = ast.Ly_AST_LENode(p[1], p[3])
+            elif p[2] == ">=":
+                p[0] = ast.Ly_AST_GENode(p[1], p[3])
+            elif p[2] == "!=":
+                p[0] = ast.Ly_AST_NENode(p[1], p[3])
+            elif p[2] == "==":
+                p[0] = ast.Ly_AST_EQNode(p[1], p[3])
+        else:
+            p[0] = p[1]
+    
+    def p_cmp_expr(self, p):
+        """
+        cmp_expr : or
+        """
+        p[0] = p[1]
             
     def p_or_expr(self, p):
         """or : or BOR xor
@@ -172,39 +290,6 @@ class LyParser(object):
                 p[0] = ast.Ly_AST_BinShrNode(p[1], p[3])
         else:
             p[0] = p[1]
-            
-    def p_cmp(self, p):
-        """cmp : cmp LT cmp_expr
-               | cmp GT cmp_expr
-               | cmp LE cmp_expr
-               | cmp GE cmp_expr
-               | cmp NE cmp_expr
-               | cmp DEQUAL cmp_expr
-               | cmp_expr
-        """
-        if len(p) == 4:
-            if p[2] == "<":
-                p[0] = ast.Ly_AST_LTNode(p[1], p[3])
-            elif p[2] == ">":
-                p[0] = ast.Ly_AST_GTNode(p[1], p[3])
-            elif p[2] == "<=":
-                p[0] = ast.Ly_AST_LENode(p[1], p[3])
-            elif p[2] == ">=":
-                p[0] = ast.Ly_AST_GENode(p[1], p[3])
-            elif p[2] == "!=":
-                p[0] = ast.Ly_AST_NENode(p[1], p[3])
-            elif p[2] == "==":
-                p[0] = ast.Ly_AST_EQNode(p[1], p[3])
-        else:
-            p[0] = p[1]
-    
-    def p_cmp_expr(self, p):
-        """
-        cmp_expr : atom
-                 | or
-                 | par_expr
-        """
-        p[0] = p[1]
 
     def p_par_expr(self, p):
         """par_expr : LPAR arith RPAR
@@ -316,12 +401,15 @@ class LyParser(object):
         code_block : LBRACE input RBRACE
         """
         p[0] = ast.Ly_AST_CodeNode(p[2])
+        
+    def p_return(self, p):
+        """
+        return_expr : RETURN test
+        """
+        p[0] = ast.Ly_AST_ReturnNode(p[2])
     
     def p_error(self, p):
-        if not p:
-            print("Syntax error: unexpected EOF")
-        else:
-            print("Syntax error:", p)
+        Ly_SyntaxError(self.filename, p.lineno, [p.lexpos], self.fopen.readlines()[p.lineno - 1], "syntax error")
 
 if __name__ == "__main__":
     #p = LyParser("../../examples/all.ly")
